@@ -11,7 +11,7 @@ const {
   getSellers,
   getCategories,
   getBrands,
-} = require("../controllers/inventoryController"); // Updated to use inventory controller functions
+} = require("../controllers/inventoryController"); 
 
 // Route to create a new inventory item
 router.post("/items", createItem);

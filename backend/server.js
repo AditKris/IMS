@@ -4,7 +4,8 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
 
-const noteRoutes = require("./routes/noteRoutes");
+const inventoryRoutes = require("./routes/inventoryRoutes");
+const authRoutes = require("./routes/authRoutes"); // Use your inventory routes
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -22,8 +23,8 @@ mongoose
   .then(() => console.log("MongoDB connected successfully"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// Routes
-app.use("/api/notes", noteRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/auth", authRoutes); // Use your auth routes
 
 // Start Server
 app.listen(PORT, () => {
