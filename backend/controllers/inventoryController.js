@@ -137,14 +137,25 @@ exports.updateItem = async (req, res) => {
   }
 };
 
-// Delete an inventory item
 exports.deleteItem = async (req, res) => {
   try {
     const { id } = req.params;
-    await Inventory.findByIdAndDelete(id);
-    res.status(200).json({ message: "Item deleted successfully" });
+    const deletedItem = await item.findByIdAndDelete(id);
+    
+    if (!deletedItem) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    res.status(200).json({ 
+      message: "Item deleted successfully",
+      item: deletedItem 
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting item", error });
+    console.error("Error deleting item:", error);
+    res.status(500).json({ 
+      message: "Error deleting item", 
+      error: error.message 
+    });
   }
 };
 
