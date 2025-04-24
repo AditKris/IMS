@@ -11,6 +11,10 @@ const {
   getSellers,
   getCategories,
   getBrands,
+  addStock,
+  sellItem,
+  getSales,
+  getStockHistory,
 } = require("../controllers/inventoryController"); 
 
 // Route to create a new inventory item
@@ -23,8 +27,12 @@ router.get("/items", getItem);
 router.get("/sellers", getSellers);
 router.get("/categories", getCategories);
 router.get("/brands", getBrands);
+router.get("/sales", getSales);
+router.get("/items/:id/stock-history", getStockHistory);
 // Route to update an inventory item
 router.put("/:id", updateItem);
+router.put("/items/:id/add-stock", addStock);
+router.put("/items/:id/sell", sellItem);
 
 // Route to delete an inventory item
 router.delete("/:id", deleteItem);

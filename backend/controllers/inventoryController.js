@@ -3,6 +3,8 @@ const item = require("../models/item");
 const Seller = require("../models/seller");
 const Category = require("../models/category");
 const Brand = require("../models/brand");
+const Sale = require("../models/sale");
+const StockHistory = require("../models/stockHistory");
 
 // Create a new inventory item
 exports.createItem = async (req, res) => {
@@ -54,8 +56,35 @@ exports.createItem = async (req, res) => {
 // Get all inventory items
 exports.getItem = async (req, res) => {
   try {
-    const inventoryItems = await Inventory.find().sort({ lastUpdated: -1 });
-    res.status(200).json(inventoryItems);
+    const { page = 1, limit = 10, category, brand, minPrice, maxPrice, search } = req.query;
+
+    const query = {};
+
+    // Add filters
+    if (category) query.category = category;
+    if (brand) query.brand = brand;
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = parseFloat(minPrice);
+      if (maxPrice) query.price.$lte = parseFloat(maxPrice);
+    }
+    if (search) query.name = { $regex: search, $options: "i" };
+
+    // Pagination
+    const skip = (page - 1) * limit;
+    const totalItems = await item.countDocuments(query);
+    const items = await item
+      .find(query)
+      .populate("category brand seller")
+      .skip(skip)
+      .limit(parseInt(limit))
+      .sort({ name: 1 });
+
+    res.status(200).json({
+      items,
+      totalPages: Math.ceil(totalItems / limit),
+      currentPage: parseInt(page),
+    });
   } catch (error) {
     res.status(500).json({ message: "Error fetching items", error });
   }
@@ -85,6 +114,48 @@ exports.deleteItem = async (req, res) => {
     res.status(200).json({ message: "Item deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Error deleting item", error });
+  }
+};
+
+exports.sellItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantity } = req.body;
+
+    const updatedItem = await item.findByIdAndUpdate(
+      id,
+      { $inc: { stock: -quantity } },
+      { new: true }
+    );
+
+    // Save sale data
+    const sale = new Sale({ item: id, quantity });
+    await sale.save();
+
+    res.status(200).json({ message: "Item sold successfully", item: updatedItem });
+  } catch (error) {
+    res.status(500).json({ message: "Error selling item", error });
+  }
+};
+
+exports.addStock = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantity } = req.body;
+
+    const updatedItem = await item.findByIdAndUpdate(
+      id,
+      { $inc: { stock: quantity } },
+      { new: true }
+    );
+
+    // Save stock history data
+    const stockHistory = new StockHistory({ item: id, quantity });
+    await stockHistory.save();
+
+    res.status(200).json({ message: "Stock added successfully", item: updatedItem });
+  } catch (error) {
+    res.status(500).json({ message: "Error adding stock", error });
   }
 };
 
@@ -148,5 +219,40 @@ exports.getBrands = async (req, res) => {
     res.status(200).json(brands);
   } catch (error) {
     res.status(500).json({ message: "Error fetching brands", error });
+  }
+};
+
+exports.addStock = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantity } = req.body;
+
+    const updatedItem = await item.findByIdAndUpdate(
+      id,
+      { $inc: { stock: quantity } },
+      { new: true }
+    );
+
+    res.status(200).json({ message: "Stock added successfully", item: updatedItem });
+  } catch (error) {
+    res.status(500).json({ message: "Error adding stock", error });
+  }
+};
+
+exports.getSales = async (req, res) => {
+  try {
+    const sales = await Sale.find().populate("item", "name");
+    res.status(200).json(sales);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching sales data", error });
+  }
+};
+
+exports.getStockHistory = async (req, res) => {
+  try {
+    const stockHistory = await StockHistory.find().populate("item", "name");
+    res.status(200).json(stockHistory);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching stock history", error });
   }
 };
