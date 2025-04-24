@@ -1,0 +1,36 @@
+# Backend dependencies
+backend/node_modules
+backend/*.log
+backend/npm-debug.log
+backend/yarn-debug.log
+backend/yarn-error.log
+
+# Backend environment variables
+backend/.env
+backend/.env.local
+backend/.env.development
+backend/.env.test
+backend/.env.production
+
+# Backend build and dist
+backend/dist
+backend/build
+
+# Backend logs
+backend/logs
+
+# Backend runtime data
+backend/pids
+backend/*.pid
+backend/*.seed
+backend/*.pid.lock
+
+# IDE and OS files
+.idea
+.vscode
+.DS_Store
+Thumbs.db
+
+# npm cache
+.npm
+.eslintcache
