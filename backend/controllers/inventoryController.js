@@ -94,15 +94,46 @@ exports.getItem = async (req, res) => {
 exports.updateItem = async (req, res) => {
   try {
     const { id } = req.params;
-    const { itemName, quantity, price, category, supplier } = req.body;
-    const updatedItem = await Inventory.findByIdAndUpdate(
+    const { name, price, stock, category, seller, brand } = req.body;
+
+    // Find the referenced documents
+    const existingCategory = await Category.findOne({ name: category });
+    const existingSeller = await Seller.findOne({ name: seller });
+    const existingBrand = await Brand.findOne({ name: brand });
+
+    if (!existingCategory || !existingSeller || !existingBrand) {
+      return res.status(404).json({ 
+        message: "One or more references (category, seller, or brand) not found" 
+      });
+    }
+
+    const updatedItem = await item.findByIdAndUpdate(
       id,
-      { itemName, quantity, price, category, supplier, lastUpdated: Date.now() },
+      {
+        name,
+        price,
+        stock,
+        category: existingCategory._id,
+        seller: existingSeller._id,
+        brand: existingBrand._id,
+      },
       { new: true }
-    );
-    res.status(200).json(updatedItem);
+    ).populate('category brand seller');
+
+    if (!updatedItem) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    res.status(200).json({ 
+      message: "Item updated successfully", 
+      item: updatedItem 
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error updating item", error });
+    console.error("Error updating item:", error);
+    res.status(500).json({ 
+      message: "Error updating item", 
+      error: error.message 
+    });
   }
 };
 
