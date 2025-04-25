@@ -1,4 +1,3 @@
-// backend/controllers/inventoryController.js
 const item = require("../models/item");
 const Seller = require("../models/seller");
 const Category = require("../models/category");
@@ -6,13 +5,13 @@ const Brand = require("../models/brand");
 const Sale = require("../models/sale");
 const StockHistory = require("../models/stockHistory");
 
-// Create a new inventory item
+
 exports.createItem = async (req, res) => {
   try {
     console.log(req.body);
     const { name, stock, price, category, brand, seller, description } = req.body;
 
-    // Validate required fields
+    
     if (!name || !stock || !price || !category || !brand || !seller) {
       return res.status(400).json({ message: "All fields are required" });
     }
@@ -22,18 +21,18 @@ exports.createItem = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    // Find the brand by name
+    
     const existingBrand = await Brand.findOne({ name: brand });
     if (!existingBrand) {
       return res.status(404).json({ message: "Brand not found" });
     }
 
-    // Find the seller by name
+    
     const existingSeller = await Seller.findOne({ name: seller });
     if (!existingSeller) {
       return res.status(404).json({ message: "Seller not found" });
     }
-    // Create a new inventory item
+    
     const newItem = new item({
       name,
       stock,
@@ -44,7 +43,7 @@ exports.createItem = async (req, res) => {
       description,
     });
 
-    // Save the item to the database
+    
     const savedItem = await newItem.save();
 
     res.status(201).json({ message: "Product added successfully", item: savedItem });
@@ -53,14 +52,14 @@ exports.createItem = async (req, res) => {
   }
 };
 
-// Get all inventory items
+
 exports.getItem = async (req, res) => {
   try {
     const { page = 1, limit = 10, category, brand, minPrice, maxPrice, search } = req.query;
 
     const query = {};
 
-    // Add filters
+    
     if (category) query.category = category;
     if (brand) query.brand = brand;
     if (minPrice || maxPrice) {
@@ -70,7 +69,7 @@ exports.getItem = async (req, res) => {
     }
     if (search) query.name = { $regex: search, $options: "i" };
 
-    // Pagination
+    
     const skip = (page - 1) * limit;
     const totalItems = await item.countDocuments(query);
     const items = await item
@@ -90,13 +89,13 @@ exports.getItem = async (req, res) => {
   }
 };
 
-// Update an inventory item
+
 exports.updateItem = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, price, stock, category, seller, brand } = req.body;
 
-    // Find the referenced documents
+    
     const existingCategory = await Category.findOne({ name: category });
     const existingSeller = await Seller.findOne({ name: seller });
     const existingBrand = await Brand.findOne({ name: brand });
@@ -349,8 +348,6 @@ exports.getStockHistory = async (req, res) => {
     res.status(500).json({ message: "Error fetching stock history", error });
   }
 };
-
-// Add these new controller functions
 
 exports.getStats = async (req, res) => {
   try {
