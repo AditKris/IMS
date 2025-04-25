@@ -349,3 +349,58 @@ exports.getStockHistory = async (req, res) => {
     res.status(500).json({ message: "Error fetching stock history", error });
   }
 };
+
+// Add these new controller functions
+
+exports.getStats = async (req, res) => {
+  try {
+    const totalStock = await item.aggregate([
+      { $group: { _id: null, total: { $sum: "$stock" } } }
+    ]);
+    
+    const salesStats = await Sale.aggregate([
+      { 
+        $group: { 
+          _id: null, 
+          totalSold: { $sum: "$quantity" },
+          totalRevenue: { $sum: "$total" }
+        } 
+      }
+    ]);
+
+    res.json({
+      totalStock: totalStock[0]?.total || 0,
+      totalItemSold: salesStats[0]?.totalSold || 0,
+      totalRevenue: salesStats[0]?.totalRevenue || 0
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching stats", error });
+  }
+};
+
+exports.getDailySales = async (req, res) => {
+  try {
+    const dailySales = await Sale.aggregate([
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+          revenue: { $sum: "$total" },
+          quantity: { $sum: "$quantity" }
+        }
+      },
+      { $sort: { _id: 1 } },
+      {
+        $project: {
+          date: "$_id",
+          revenue: 1,
+          quantity: 1,
+          _id: 0
+        }
+      }
+    ]);
+
+    res.json(dailySales);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching daily sales", error });
+  }
+};
