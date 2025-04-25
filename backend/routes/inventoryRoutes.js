@@ -15,6 +15,7 @@ const {
   sellItem,
   getSales,
   getStockHistory,
+  deleteSale,
 } = require("../controllers/inventoryController"); 
 
 // Route to create a new inventory item
@@ -36,6 +37,7 @@ router.put("/items/:id/sell", sellItem);
 
 // Route to delete an inventory item
 router.delete("/:id", deleteItem);
+router.delete("/sales/:id", deleteSale);
 
 
 

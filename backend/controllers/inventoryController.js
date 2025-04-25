@@ -164,17 +164,35 @@ exports.sellItem = async (req, res) => {
     const { id } = req.params;
     const { quantity } = req.body;
 
+    const inventoryItem = await item.findById(id);
+    if (!inventoryItem) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    if (inventoryItem.stock < quantity) {
+      return res.status(400).json({ message: "Insufficient stock" });
+    }
+
     const updatedItem = await item.findByIdAndUpdate(
       id,
       { $inc: { stock: -quantity } },
       { new: true }
     );
 
-    // Save sale data
-    const sale = new Sale({ item: id, quantity });
+    const sale = new Sale({
+      item: id,
+      itemName: inventoryItem.name,
+      price: inventoryItem.price,
+      quantity: quantity,
+      total: inventoryItem.price * quantity
+    });
     await sale.save();
 
-    res.status(200).json({ message: "Item sold successfully", item: updatedItem });
+    res.status(200).json({ 
+      message: "Item sold successfully", 
+      item: updatedItem,
+      sale: sale 
+    });
   } catch (error) {
     res.status(500).json({ message: "Error selling item", error });
   }
@@ -191,7 +209,6 @@ exports.addStock = async (req, res) => {
       { new: true }
     );
 
-    // Save stock history data
     const stockHistory = new StockHistory({ item: id, quantity });
     await stockHistory.save();
 
@@ -283,10 +300,44 @@ exports.addStock = async (req, res) => {
 
 exports.getSales = async (req, res) => {
   try {
-    const sales = await Sale.find().populate("item", "name");
+    const sales = await Sale.find()
+      .populate({
+        path: 'item',
+        select: 'name category brand',
+        populate: [
+          { path: 'category', select: 'name' },
+          { path: 'brand', select: 'name' }
+        ]
+      })
+      .sort({ date: -1 });
+    
     res.status(200).json(sales);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching sales data", error });
+    res.status(500).json({ 
+      message: "Error fetching sales data", 
+      error: error.message 
+    });
+  }
+}; 
+
+exports.deleteSale = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedSale = await Sale.findByIdAndDelete(id);
+    
+    if (!deletedSale) {
+      return res.status(404).json({ message: "Sale record not found" });
+    }
+
+    res.status(200).json({ 
+      message: "Sale record deleted successfully",
+      sale: deletedSale 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Error deleting sale record", 
+      error: error.message 
+    });
   }
 };
 
